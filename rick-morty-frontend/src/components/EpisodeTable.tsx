@@ -49,7 +49,7 @@ export default function EpisodeTable() {
     if (!data) return <p>Loading...</p>;
 
     return (
-        <div>
+        <div className="centered">
             <h2>Rick and Morty Episodes</h2>
 
             <EpisodeFilters
@@ -83,7 +83,11 @@ export default function EpisodeTable() {
                     {data.data.map((episode) => (
                         <tr key={episode.id}>
                             <td>{episode.name}</td>
-                            <td>{episode.air_date ?? "-"}</td>
+                            <td>
+                                {episode.air_date
+                                    ? new Date(episode.air_date).toLocaleDateString("en-CA") // YYYY-MM-DD
+                                    : "-"}
+                            </td>
                             <td>{episode.episode_code}</td>
                         </tr>
                     ))}
