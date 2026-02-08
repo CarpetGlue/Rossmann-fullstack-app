@@ -171,6 +171,22 @@ Tables:
 - characters
 - character_episode
 
+## Time tracking
+
+Work was tracked via incremental Git commits. Estimated time spent per major task:
+
+| Task | Approx. Time |
+|-----|--------------|
+| Project setup & configuration (Laravel, DB, tooling) | 2h |
+| Backend structure (migrations, models, relationships) | 2h |
+| GraphQL service & import command | 2.5h |
+| API endpoints (episodes with characters, filtering, pagination) | 1h |
+| React + TypeScript frontend development | 4h |
+| Frontend API layer & type definitions | 1h |
+| Bug fixes & UI polish | 1h |
+| **Total** | **~15h** |
+
+
 ## Notes
 
 - UI is intentionally minimal
