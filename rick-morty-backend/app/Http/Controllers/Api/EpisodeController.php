@@ -10,7 +10,7 @@ class EpisodeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Episode::query();
+        $query = Episode::with('characters');
 
         if ($request->filled('name')) {
             $query->where('name', 'like', '%' . $request->name . '%');
