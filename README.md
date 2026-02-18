@@ -147,6 +147,16 @@ Install dependencies:
 npm install
 ```
 
+Create a `.env` file:
+
+```bash
+touch .env
+```
+
+Add the following variable:  
+
+`VITE_API_URL=http://localhost:8000/api/episodes`
+
 Start dev server:
 
 ```bash

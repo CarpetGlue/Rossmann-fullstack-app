@@ -1,21 +1,30 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchEpisodes } from "../api/episodes";
 import type { Episode, PaginatedResponse } from "../types/episode";
 import EpisodeFilters from "./EpisodeFilters";
 import { CharacterList } from "./CharacterList";
+import React from "react";
 
 export default function EpisodeTable() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [data, setData] = useState<PaginatedResponse<Episode> | null>(null);
-    const [page, setPage] = useState(1);
-    const [filters, setFilters] = useState({});
     const [expandedId, setExpandedId] = useState<number | null>(null);
-    const [sort, setSort] = useState<{
-        field: string;
-        direction: "asc" | "desc";
-    }>({
-        field: "air_date",
-        direction: "asc",
-    });
+
+    // URL-driven state
+    const page = Number(searchParams.get("page") ?? 1);
+
+    const filters = {
+        name: searchParams.get("name") ?? undefined,
+        date_from: searchParams.get("date_from") ?? undefined,
+        date_to: searchParams.get("date_to") ?? undefined,
+    };
+
+    const sort = {
+        field: searchParams.get("sort") ?? "air_date",
+        direction:
+            (searchParams.get("direction") as "asc" | "desc") ?? "asc",
+    };
 
     useEffect(() => {
         fetchEpisodes({
@@ -24,16 +33,35 @@ export default function EpisodeTable() {
             sort: sort.field,
             direction: sort.direction,
         }).then(setData);
-    }, [page, filters, sort]);
+    }, [page, filters.name, filters.date_from, filters.date_to, sort.field, sort.direction]);
+
+    function updateParams(newParams: Record<string, string | undefined>) {
+        const updated = new URLSearchParams(searchParams);
+
+        Object.entries(newParams).forEach(([key, value]) => {
+            if (value === undefined || value === "") {
+                updated.delete(key);
+            } else {
+                updated.set(key, value);
+            }
+        });
+
+        setSearchParams(updated);
+    }
 
     function toggleSort(field: string) {
-        setPage(1);
         setExpandedId(null);
-        setSort((prev) => ({
-            field,
-            direction:
-                prev.field === field && prev.direction === "asc" ? "desc" : "asc",
-        }));
+
+        const newDirection =
+            sort.field === field && sort.direction === "asc"
+                ? "desc"
+                : "asc";
+
+        updateParams({
+            sort: field,
+            direction: newDirection,
+            page: "1",
+        });
     }
 
     function renderSortArrow(field: string) {
@@ -48,7 +76,6 @@ export default function EpisodeTable() {
         );
     }
 
-
     if (!data) return <p>Loading...</p>;
 
     return (
@@ -57,8 +84,11 @@ export default function EpisodeTable() {
 
             <EpisodeFilters
                 onChange={(newFilters) => {
-                    setPage(1);
-                    setFilters((prev) => ({ ...prev, ...newFilters }));
+                    setExpandedId(null);
+                    updateParams({
+                        ...newFilters,
+                        page: "1",
+                    });
                 }}
             />
 
@@ -69,14 +99,20 @@ export default function EpisodeTable() {
                             className="sortable"
                             onClick={() => toggleSort("name")}
                         >
-                            Name <span className="sort-indicator">{renderSortArrow("name")}</span>
+                            Name{" "}
+                            <span className="sort-indicator">
+                                {renderSortArrow("name")}
+                            </span>
                         </th>
 
                         <th
                             className="sortable"
                             onClick={() => toggleSort("air_date")}
                         >
-                            Air Date <span className="sort-indicator">{renderSortArrow("air_date")}</span>
+                            Air Date{" "}
+                            <span className="sort-indicator">
+                                {renderSortArrow("air_date")}
+                            </span>
                         </th>
 
                         <th>Episode</th>
@@ -88,19 +124,23 @@ export default function EpisodeTable() {
                         const isOpen = expandedId === episode.id;
 
                         return (
-                            <>
-                                <tr key={episode.id}>
+                            <React.Fragment key={episode.id}>
+                                <tr>
                                     <td>{episode.name}</td>
                                     <td>
                                         {episode.air_date
-                                            ? new Date(episode.air_date).toLocaleDateString("en-CA")
+                                            ? new Date(
+                                                  episode.air_date
+                                              ).toLocaleDateString("en-CA")
                                             : "-"}
                                     </td>
                                     <td>{episode.episode_code}</td>
                                     <td>
                                         <button
                                             onClick={() =>
-                                                setExpandedId(isOpen ? null : episode.id)
+                                                setExpandedId(
+                                                    isOpen ? null : episode.id
+                                                )
                                             }
                                         >
                                             {isOpen ? "Hide" : "Show"} characters
@@ -112,22 +152,27 @@ export default function EpisodeTable() {
                                     <tr>
                                         <td colSpan={4}>
                                             <CharacterList
-                                                characters={episode.characters}
+                                                characters={
+                                                    episode.characters
+                                                }
                                             />
                                         </td>
                                     </tr>
                                 )}
-                            </>
+                            </React.Fragment>
                         );
                     })}
                 </tbody>
-
             </table>
 
             <div style={{ marginTop: "1rem" }}>
                 <button
                     disabled={page === 1}
-                    onClick={() => setPage((p) => p - 1)}
+                    onClick={() =>
+                        updateParams({
+                            page: String(page - 1),
+                        })
+                    }
                 >
                     Prev
                 </button>
@@ -138,7 +183,11 @@ export default function EpisodeTable() {
 
                 <button
                     disabled={page === data.last_page}
-                    onClick={() => setPage((p) => p + 1)}
+                    onClick={() =>
+                        updateParams({
+                            page: String(page + 1),
+                        })
+                    }
                 >
                     Next
                 </button>
